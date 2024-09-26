@@ -1,0 +1,45 @@
+name: CI/CD Pipeline for Node.js Application
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18' # Use your desired Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test  # Optional step to run tests
+
+      - name: Build application
+        run: npm run build  # If applicable for your Node.js app
+
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: <your-ec2-public-ip>
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "."
+          target: "/var/www/<your-app-directory>"
+
+      - name: Restart application
+        run: |
+          ssh -i ~/.ssh/id_rsa_github_actions ubuntu@<your-ec2-public-ip> << 'EOF'
+            cd /var/www/<your-app-directory>
+            npm install --production  # Install production dependencies
+            pm2 restart my-app || pm2 start index.js --name my-app  # Adjust index.js to your main file
+          EOF
