@@ -10,6 +10,15 @@ app.get('/',(req,res)=>{
 }
 );
 
+app.get('/api',(req,res)=>{ 
+    res.json({
+        message: "API is working",
+        "Status": 200
+    });
+}
+);
+
+
 app.listen(port,()=>{
     console.log('Server is running on port 3000');
 }
