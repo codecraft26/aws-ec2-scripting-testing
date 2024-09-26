@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -16,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '18' # Use your desired Node.js version
+          node-version: '18' # Specify the Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -26,16 +26,20 @@ jobs:
         with:
           host: ${{ secrets.PUBLIC_IP }}
           username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_SSH_KEY }} # Reference SSH key from secrets
           source: "."
           target: "/app-1"
-          port: 22 # Ensure correct SSH port
+          port: 22 # Default SSH port for EC2
           debug: true
 
-      - name: Restart application
-        run: |
-          ssh -o StrictHostKeyChecking=no -i /github/home/.ssh/id_rsa_github_actions ubuntu@${{ secrets.PUBLIC_IP }} << 'EOF'
+      - name: Restart application on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PUBLIC_IP }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }} # Reference SSH key from secrets
+          port: 22
+          script: |
             cd /app-1
             npm install --production  # Install production dependencies
-            pm2 restart my-app1 || pm2 start index.js --name my-app1  # Adjust index.js to your main file
-          EOF
+            pm2 restart my-app1 || pm2 start index.js --name my-app1  # Restart the app using pm2
